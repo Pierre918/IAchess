@@ -88,7 +88,7 @@ def expand_node(node, state):
 
 # Simulation d'un jeu jusqu'à la fin
 def simulate(state):
-    while not state.is_game_over():)
+    while not state.is_game_over():
         state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
 
     return evaluate(state)
