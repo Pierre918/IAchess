@@ -44,11 +44,9 @@ def random_board(max_depth=100) :
     return board
 
 
-# Calcul de la valeur UCB (pas sur)
-def ucb(node, c_param=sqrt(2)):
-    if node.visits==0:
-        return inf
-    return node.wins / (node.visits) + c_param * sqrt(2 * log(node.parent.visits) / node.visits)
+# Calcul de la valeur UCB (à faire)
+#def ucb(node, c_param=sqrt(2)):
+    
 
 # Évaluation de l'état de jeu
 def evaluate(board):
