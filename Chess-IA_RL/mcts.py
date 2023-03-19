@@ -4,6 +4,11 @@ import random
 import chess
 import chess.engine
 
+
+#Stockfish
+engine = chess.engine.SimpleEngine.popen_uci(r"stockfish-windows-2022-x86-64-avx2.exe")
+
+
 # Définition de la classe Node
 class Node:
     def __init__(self, state, parent=None):
@@ -44,13 +49,18 @@ def random_board(max_depth=100) :
     return board
 
 
-# Calcul de la valeur UCB (à faire)
+# Calcul de la valeur UCB
 def ucb(node, c_param=sqrt(2)):
     if node.visits==0:
         return inf
     return node.wins / (node.visits) + c_param * sqrt(log(node.parent.visits) / node.visits)
     
 
+#Calcul de la valeur PUCT (à faire)    
+    
+    
+    
+    
 # Évaluation de l'état de jeu
 def evaluate(board):
     if board.is_checkmate():
@@ -96,6 +106,7 @@ def simulate(state):
 
     return evaluate(state)
 
+#Mise à jour de la valeur de tous les Noeuds
 def backpropagate(node, reward):
     while node is not None:
         node.update(reward)
@@ -103,3 +114,33 @@ def backpropagate(node, reward):
         
 
 
+def mcts(root, state, itermax):
+    """Monte Carlo Tree Search algorithme"""
+    for i in range(itermax):
+        node = root
+        current_state = state.copy()
+            
+        while node.children:
+            node = select_node(node)
+            current_state.push(node.state.peek())
+                
+        if not current_state.is_game_over():
+            node = expand_node(node, current_state)
+    
+            reward = simulate(current_state)
+            backpropagate(node, reward)
+
+   
+     return max(root.children, key=lambda x: x.visits).state.peek()
+
+
+
+if __name__ == "__main__":
+    fen ="r2q2nr/pppk3p/5ppB/2P5/2BN4/2N4P/PPP1QP1P/R3K2R w KQ - 4 14"
+    board = chess.Board(fen)
+    #board = random_board()
+    root = Node(board)
+    best_move = mcts(root, board, 120)
+    #print(board.fen())
+    print(best_move)
+    print(board)
