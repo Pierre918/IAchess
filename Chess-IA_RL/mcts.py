@@ -140,7 +140,7 @@ if __name__ == "__main__":
     board = chess.Board(fen)
     #board = random_board()
     root = Node(board)
-    best_move = mcts(root, board, 120)
+    best_move = mcts(root, board, 1000)
     #print(board.fen())
     print(best_move)
     print(board)
