@@ -63,12 +63,12 @@ def ucb(node, c_param=sqrt(2)):
     
 # Évaluation de l'état de jeu
 def evaluate(board):
-    #piece_values = {'P': 1,'N': 3,'B': 3,'R': 5,'Q': 9,'K': 100,'p': 1,'n': 3,'b': 3,'r': 5,'q': 9,'k': 100}
+    piece_values = {'P': 1,'N': 3,'B': 3,'R': 5,'Q': 9,'K': 100,'p': 1,'n': 3,'b': 3,'r': 5,'q': 9,'k': 100}
     if board.is_checkmate():
         if board.turn==player:
-            return -1
-        else:
             return 1
+        else:
+            return -1
     elif board.is_stalemate():
         return 0
     elif board.is_insufficient_material():
@@ -78,7 +78,17 @@ def evaluate(board):
     elif board.is_fivefold_repetition():
         return 0
     else:
-        return None
+        score = 0
+        for piece in board.piece_map().values():
+            if piece.color == chess.WHITE:
+                score += piece_values[str(piece)]
+            else:
+                score -= piece_values[str(piece)]
+
+        if board.turn == player:
+            return score / 100.0
+        else:
+            return -score / 100.0
 
 
 # Sélection d'un noeud fils avec la plus grande valeur UCB
