@@ -132,6 +132,18 @@ def mcts(root, state, itermax):
     for i in range(itermax):
         node = root
         current_state = state.copy()
+        
+        n=1
+        for i in range(itermax):
+            node = root
+            current_state = state.copy()
+            if n==1:
+                for move in state.legal_moves:
+                    new_state = state.copy()
+                    new_state.push(move)
+                    if new_state not in [child.state for child in node.children]:
+                        node.add_child(new_state)
+            n+=1
             
         while node.children:
             node = select_node(node)
