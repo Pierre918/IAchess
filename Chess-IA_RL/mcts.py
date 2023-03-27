@@ -135,7 +135,12 @@ def mcts(root, state, itermax):
         else:
             reward = evaluate(current_state)
             backpropagate(node, reward)
-
+    moves = {}
+    for move in root.children:
+        moves[move.state.peek()] = (move.wins,move.visits)
+    best_moves = dict(sorted(moves.items(), key=lambda item:item[1],reverse=True))
+    for (cle, valeur) in enumerate(best_moves.items()):
+        print(f"{cle}: {valeur}")
    
      return max(root.children, key=lambda x: x.wins / x.visits).state.peek()
 
