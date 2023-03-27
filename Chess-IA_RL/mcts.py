@@ -63,8 +63,9 @@ def ucb(node, c_param=sqrt(2)):
     
 # Évaluation de l'état de jeu
 def evaluate(board):
+    #piece_values = {'P': 1,'N': 3,'B': 3,'R': 5,'Q': 9,'K': 100,'p': 1,'n': 3,'b': 3,'r': 5,'q': 9,'k': 100}
     if board.is_checkmate():
-        if board.turn:
+        if board.turn==player:
             return -1
         else:
             return 1
@@ -93,11 +94,13 @@ def select_node(node):
 
 # Expansion d'un noeud avec un mouvement aléatoire
 def expand_node(node, state):
-    possible_moves = list(state.legal_moves)
-    random_move = random.choice(possible_moves)
-    new_state = state.copy()
-    new_state.push(random_move)
-    return node.add_child(new_state)
+    for move in state.legal_moves:
+        new_state = state.copy()
+        new_state.push(move)
+        if new_state not in [child.state for child in node.children]:
+            node.add_child(new_state)
+    random_move = random.choice(node.children)
+    return random_move
 
 # Simulation d'un jeu jusqu'à la fin
 def simulate(state):
@@ -129,12 +132,15 @@ def mcts(root, state, itermax):
     
             reward = simulate(current_state)
             backpropagate(node, reward)
+        else:
+            reward = evaluate(current_state)
+            backpropagate(node, reward)
 
    
-     return max(root.children, key=lambda x: x.visits).state.peek()
+     return max(root.children, key=lambda x: x.wins / x.visits).state.peek()
 
 
-
+"""
 if __name__ == "__main__":
     fen ="r2q2nr/pppk3p/5ppB/2P5/2BN4/2N4P/PPP1QP1P/R3K2R w KQ - 4 14"
     board = chess.Board(fen)
@@ -143,4 +149,32 @@ if __name__ == "__main__":
     best_move = mcts(root, board, 1000)
     #print(board.fen())
     print(best_move)
+    print(board)"""
+
+    
+def move_player():
+    global player
+    if board.turn: 
+        player = True
+    else: 
+        player = False
+    try :
+        player_move = input("Move: ")
+        board.push_san(str(player_move))
+    except:
+        print("Invalid move")
+        move_player()
+
+board=chess.Board()
+
+while not board.is_game_over():
+    root = Node(board) 
+    print(board.fen())
     print(board)
+    move_player()
+    if board.is_game_over():
+        print("You win")
+        break
+    best_move = mcts(root, board, 100)
+    print(best_move)
+    board.push_san(str(best_move))
