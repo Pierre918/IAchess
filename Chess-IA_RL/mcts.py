@@ -3,6 +3,7 @@ from math import log, inf, sqrt
 import random
 import chess
 import chess.engine
+import matplotlib.pyplot as plt
 
 
 #Stockfish
@@ -122,7 +123,7 @@ def evaluate(board):
             return -score / 100.0
 
 
-# Sélection d'un noeud fils avec la plus grande valeur UCB
+# Sélection d'un noeud fils avec la plus grande valeur UCB/PUCT
 def select_node(node):
        """max_score = -inf
         best_child = None
@@ -147,6 +148,8 @@ def expand_node(node, state):
 # Simulation d'un jeu jusqu'à la fin
 def simulate(state):
     while not state.is_game_over():
+        #distance_checkmate = analyze_position(state) #Avec Stockfish
+        #state.push_san(distance_checkmate[0]["pv"][0])
         state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
 
     return evaluate(state)
@@ -158,24 +161,45 @@ def backpropagate(node, reward):
         node = node.parent
         
 
+        
+def analyze_position(board, num_moves_to_return=1, depth_limit=10, time_limit=0.1):
+    search_limit = chess.engine.Limit(depth=depth_limit, time=time_limit)
+    infos = engine.analyse(board, search_limit, multipv=num_moves_to_return)
+    return [format_info(info) for info in infos]
+
+def format_info(info):
+    score = info["score"].white()
+    mate_score = score.mate()
+    centipawn_score = score.score()
+    return {
+        "mate_score": mate_score,
+        "centipawn_score": centipawn_score,
+        "pv": format_moves(info["pv"]),
+    }
+    
+def format_moves(pv):
+    return [move.uci() for move in pv]
+
+
+
+
 
 def mcts(root, state, itermax):
     """Monte Carlo Tree Search algorithme"""
+    distance_checkmate = analyze_position(state)
+    if distance_checkmate[0]["mate_score"]!=None:
+        return distance_checkmate[0]["pv"][0]
+    first_expansion = True
     for i in range(itermax):
         node = root
         current_state = state.copy()
-        
-        n=1
-        for i in range(itermax):
-            node = root
-            current_state = state.copy()
-            if n==1:
-                for move in state.legal_moves:
-                    new_state = state.copy()
-                    new_state.push(move)
-                    if new_state not in [child.state for child in node.children]:
-                        node.add_child(new_state)
-            n+=1
+        if first_expansion:
+            for move in state.legal_moves:
+                new_state = state.copy()
+                new_state.push(move)
+                if new_state not in [child.state for child in node.children]:
+                    node.add_child(new_state)
+            first_expansion = False
             
         while node.children:
             node = select_node(node)
@@ -211,7 +235,6 @@ if __name__ == "__main__":
     print(board)"""
 
 
-import matplotlib.pyplot as plt
 
 
 fig, ax = plt.subplots(figsize=(20, 10), dpi = 40)
@@ -219,10 +242,9 @@ ax.set_xlim(0, 10)
 ax.set_ylim(0, 10)
 
 def plot_node(node, x, y, dx, dy):
-    # Plot the node
+    """Dessiner l'arbre des coups"""
     ax.annotate(node.state, xy=(x, y), xytext=(x, y+0.5), ha='center', va='center', bbox=dict(boxstyle='square', facecolor='w', edgecolor='black'))
 
-    # Plot the edges to the children
     if node.children:
         if len(node.children) == 1:
             x_spacing = 0
@@ -250,6 +272,7 @@ def move_player():
 
 
 def play():
+    """Fonction pour jouer"""
     global player
     iterations = 5000
     first = input("White or Black ? (w/b) ")
