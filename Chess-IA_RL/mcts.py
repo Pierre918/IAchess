@@ -210,6 +210,34 @@ if __name__ == "__main__":
     print(best_move)
     print(board)"""
 
+
+import matplotlib.pyplot as plt
+
+
+fig, ax = plt.subplots(figsize=(20, 10), dpi = 40)
+ax.set_xlim(0, 10)
+ax.set_ylim(0, 10)
+
+def plot_node(node, x, y, dx, dy):
+    # Plot the node
+    ax.annotate(node.state, xy=(x, y), xytext=(x, y+0.5), ha='center', va='center', bbox=dict(boxstyle='square', facecolor='w', edgecolor='black'))
+
+    # Plot the edges to the children
+    if node.children:
+        if len(node.children) == 1:
+            x_spacing = 0
+        else:
+            x_spacing = dx / (len(node.children) - 1)
+        x_start = x - dx / 2
+        y_start = y - dy
+        for i, child in enumerate(node.children):
+            x_child = x_start + i * x_spacing
+            y_child = y_start
+            ax.plot([x, x_child], [y, y_child], 'k-', lw=1)
+            plot_node(child, x_child, y_child, dx/2, dy)
+            
+            
+            
     
 def move_player():
     global player
@@ -237,3 +265,6 @@ while not board.is_game_over():
     best_move = mcts(root, board, 100)
     print(best_move)
     board.push_san(str(best_move))
+    """plot_node(root, 0, 0, 10, 5)
+            plt.axis('off')
+            plt.show()"""
