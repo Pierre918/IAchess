@@ -56,7 +56,38 @@ def ucb(node, c_param=sqrt(2)):
     return node.wins / (node.visits) + c_param * sqrt(log(node.parent.visits) / node.visits)
     
 
-#Calcul de la valeur PUCT (à faire)    
+#Calcul de la valeur PUCT   
+def puct(node, c_param):
+    total_visits = sum(child.visits for child in node.children)
+    # Calcul du logarithme naturel du nombre total de visites
+    if total_visits == 0:
+        log_total_visits = 0
+    else :
+        log_total_visits = log(total_visits)
+        
+    best_score = -inf
+    best_child = None
+
+    for child in node.children:
+        if child.visits == 0:
+            # Si l'enfant n'a pas encore été visité
+            exploitation_term = inf
+            exploration_term = inf
+        else: 
+            # Calcul du terme d'exploitation et du terme d'exploration
+            exploitation_term = child.wins / child.visits
+            exploration_term = c_param * sqrt(log_total_visits / child.visits) * (1 / len(node.children))
+        
+        # Calcul du score pour chaque enfant
+        score = exploitation_term + exploration_term
+        
+        # Mise à jour du meilleur score et de l'enfant correspondant
+        if score > best_score:
+            best_score = score
+            best_child = child
+
+    # Retourne l'enfant ayant le meilleur score
+    return best_child  
     
     
     
@@ -114,10 +145,11 @@ def expand_node(node, state):
 
 # Simulation d'un jeu jusqu'à la fin
 def simulate(state):
-    while not state.is_game_over():
+    """while not state.is_game_over():
         state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
 
-    return evaluate(state)
+    return evaluate(state)"""
+    return puct(node, 5.0)
 
 #Mise à jour de la valeur de tous les Noeuds
 def backpropagate(node, reward):
