@@ -124,14 +124,15 @@ def evaluate(board):
 
 # Sélection d'un noeud fils avec la plus grande valeur UCB
 def select_node(node):
-        max_score = -inf
+       """max_score = -inf
         best_child = None
         for child in node.children:
             score = ucb(child)
             if score > max_score:
                 max_score = score
                 best_child = child
-        return best_child
+        return best_child"""
+        return puct(node, 5.0)
 
 # Expansion d'un noeud avec un mouvement aléatoire
 def expand_node(node, state):
@@ -145,11 +146,10 @@ def expand_node(node, state):
 
 # Simulation d'un jeu jusqu'à la fin
 def simulate(state):
-    """while not state.is_game_over():
+    while not state.is_game_over():
         state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
 
-    return evaluate(state)"""
-    return puct(node, 5.0)
+    return evaluate(state)
 
 #Mise à jour de la valeur de tous les Noeuds
 def backpropagate(node, reward):
