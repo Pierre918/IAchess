@@ -240,11 +240,6 @@ def plot_node(node, x, y, dx, dy):
             
     
 def move_player():
-    global player
-    if board.turn: 
-        player = True
-    else: 
-        player = False
     try :
         player_move = input("Move: ")
         board.push_san(str(player_move))
@@ -252,19 +247,78 @@ def move_player():
         print("Invalid move")
         move_player()
 
-board=chess.Board()
 
-while not board.is_game_over():
-    root = Node(board) 
-    print(board.fen())
-    print(board)
-    move_player()
-    if board.is_game_over():
-        print("You win")
-        break
-    best_move = mcts(root, board, 100)
-    print(best_move)
-    board.push_san(str(best_move))
-    """plot_node(root, 0, 0, 10, 5)
+
+def play():
+    global player
+    iterations = 5000
+    first = input("White or Black ? (w/b) ")
+
+        
+    if str(first)=="w" or str(first).lower=="white" or str(first).lower=="White":
+        while not board.is_game_over():
+            root = Node(board) 
+            print(board.fen())
+            print(board)
+            player = True
+            move_player()
+            if board.is_checkmate():
+                print("Vous gagnez")
+                print(board)
+                break
+            elif board.is_stalemate() or board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_insufficient_material():
+                print("Egalité") 
+                print(board)
+                break
+            print("L'IA réfléchit...")
+            best_move = mcts(root, board, iterations)
+            board.push_san(str(best_move))
+            print("L'IA joue : " + str(best_move))
+            if board.is_checkmate():
+                print("IA gagne")
+                print(board)
+                break
+            elif board.is_stalemate() or board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_insufficient_material():
+                print("Egalité") 
+                print(board)
+                break
+            """plot_node(root, 0, 0, 10, 5)
             plt.axis('off')
             plt.show()"""
+
+    elif str(first)=="b" or str(first).lower=="black" or str(first).lower=="Black":
+        while not board.is_game_over():
+            root = Node(board) 
+            print(board.fen())
+            print(board)
+            player = True
+            print("L'IA réfléchit...")
+            best_move = mcts(root, board, iterations)
+            board.push_san(str(best_move))
+            print("L'IA joue : " + str(best_move))
+            if board.is_checkmate():
+                print("IA gagne")
+                print(board)
+                break
+            elif board.is_stalemate() or board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_insufficient_material():
+                print("Egalité") 
+                print(board)
+                break
+            move_player()
+            if board.is_checkmate():
+                print("Vous gagnez")
+                print(board)
+                break
+            elif board.is_stalemate() or board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_insufficient_material():
+                print("Egalité") 
+                print(board)
+                break
+    else :
+        print("Invalid input")
+        play()
+    
+
+
+
+board=chess.Board()
+play()
