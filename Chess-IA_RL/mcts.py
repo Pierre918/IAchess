@@ -94,33 +94,36 @@ def puct(node, c_param):
     
     
 # Évaluation de l'état de jeu
-def evaluate(board):
+def evaluate(state):
     piece_values = {'P': 1,'N': 3,'B': 3,'R': 5,'Q': 9,'K': 100,'p': 1,'n': 3,'b': 3,'r': 5,'q': 9,'k': 100}
-    if board.is_checkmate():
-        if board.turn==player:
+    if state.is_checkmate():
+        if " "+player+" " in str(state.fen()):
             return 1
         else:
             return -1
-    elif board.is_stalemate():
+    elif state.is_stalemate():
         return 0
-    elif board.is_insufficient_material():
+    elif state.is_insufficient_material():
         return 0
-    elif board.is_seventyfive_moves():
+    elif state.is_seventyfive_moves():
         return 0
-    elif board.is_fivefold_repetition():
+    elif state.is_fivefold_repetition():
         return 0
     else:
         score = 0
-        for piece in board.piece_map().values():
+        # Calcul du score en sommant les valeurs de chaque pièce
+        for piece in state.piece_map().values():
             if piece.color == chess.WHITE:
                 score += piece_values[str(piece)]
             else:
                 score -= piece_values[str(piece)]
 
-        if board.turn == player:
-            return score / 100.0
-        else:
+        # Si c'est au tour du joueur courant, retourne l'inverse du score divisé par 100
+        if state.turn == player:
             return -score / 100.0
+        # Sinon, retourne le score divisé par 100
+        else:
+            return score / 100.0
 
 
 # Sélection d'un noeud fils avec la plus grande valeur UCB/PUCT
@@ -272,9 +275,8 @@ def move_player():
 
 
 def play():
-    """Fonction pour jouer"""
     global player
-    iterations = 5000
+    iterations = 1000
     first = input("White or Black ? (w/b) ")
 
         
@@ -283,7 +285,7 @@ def play():
             root = Node(board) 
             print(board.fen())
             print(board)
-            player = True
+            player = "w"
             move_player()
             if board.is_checkmate():
                 print("Vous gagnez")
@@ -293,6 +295,7 @@ def play():
                 print("Egalité") 
                 print(board)
                 break
+            print(board)
             print("L'IA réfléchit...")
             best_move = mcts(root, board, iterations)
             board.push_san(str(best_move))
@@ -314,11 +317,12 @@ def play():
             root = Node(board) 
             print(board.fen())
             print(board)
-            player = True
+            player = "b"
             print("L'IA réfléchit...")
             best_move = mcts(root, board, iterations)
             board.push_san(str(best_move))
             print("L'IA joue : " + str(best_move))
+            
             if board.is_checkmate():
                 print("IA gagne")
                 print(board)
@@ -327,6 +331,8 @@ def play():
                 print("Egalité") 
                 print(board)
                 break
+            print(board.fen())
+            print(board)
             move_player()
             if board.is_checkmate():
                 print("Vous gagnez")
@@ -336,6 +342,9 @@ def play():
                 print("Egalité") 
                 print(board)
                 break
+            """plot_node(root, 0, 0, 10, 5)
+            plt.axis('off')
+            plt.show()"""
     else :
         print("Invalid input")
         play()
