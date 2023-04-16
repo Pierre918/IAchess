@@ -140,22 +140,45 @@ def select_node(node):
 
 # Expansion d'un noeud avec un mouvement aléatoire
 def expand_node(node, state):
-    for move in state.legal_moves:
+    if " "+player+" " in state.fen():
+        best_possible_move = engine.play(state, chess.engine.Limit(time=0.1,depth = 18))
         new_state = state.copy()
-        new_state.push(move)
+        new_state.push(best_possible_move.move)
         if new_state not in [child.state for child in node.children]:
-            node.add_child(new_state)
-    random_move = random.choice(node.children)
-    return random_move
+                node.add_child(new_state)
+        chosen_move = node.children[0]
+        return chosen_move, 1
+    else:
+        for move in state.legal_moves:
+            new_state = state.copy()
+            new_state.push(move)
+            if new_state not in [child.state for child in node.children]:
+                node.add_child(new_state)
+        random_move = random.choice(node.children)
+        return random_move, 0
 
 # Simulation d'un jeu jusqu'à la fin
-def simulate(state):
-    while not state.is_game_over():
-        #distance_checkmate = analyze_position(state) #Avec Stockfish
-        #state.push_san(distance_checkmate[0]["pv"][0])
-        state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
-
-    return evaluate(state)
+def simulate(state, after):   
+    if after == 1: #si le prochain coup est celui de l'algo
+        while not state.is_game_over():
+            #distance_checkmate = analyze_position(state) #Avec Stockfish
+            #state.push_san(distance_checkmate[0]["pv"][0])
+            state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
+            """best_possible_move = engine.play(state, chess.engine.Limit(time=0.1,depth = 18))
+            if state.is_game_over():
+                return evaluate(state)
+            else:
+                state.push(best_possible_move.move)"""
+        return evaluate(state)
+    else: #si c'est celui du joueur
+        while not state.is_game_over():
+            """best_possible_move = engine.play(state, chess.engine.Limit(time=0.1,depth = 18))
+            state.push(best_possible_move.move)"""
+            if state.is_game_over():
+                return evaluate(state)
+            else:
+                state.push(random.choice(list(state.legal_moves))) # Avec des mouvements aléatoires
+        return evaluate(state)
 
 #Mise à jour de la valeur de tous les Noeuds
 def backpropagate(node, reward):
@@ -209,9 +232,8 @@ def mcts(root, state, itermax):
             current_state.push(node.state.peek())
                 
         if not current_state.is_game_over():
-            node = expand_node(node, current_state)
-    
-            reward = simulate(current_state)
+            node, after = expand_node(node, current_state)
+            reward = simulate(current_state, after)
             backpropagate(node, reward)
         else:
             reward = evaluate(current_state)
