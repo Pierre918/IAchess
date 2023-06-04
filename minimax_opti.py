@@ -74,8 +74,41 @@ with open("openings_liste.txt", "rb") as fp:   # Unpickling
 
 
 
+def order_moves(board, moves):
+    capture_moves = []
+    non_capture_moves = []
+    for move in moves:
+        if board.is_capture(move):
+            capture_moves.append(move)
+        else:
+            non_capture_moves.append(move)    
+    capture_moves.sort(key=lambda move: piece_value(board.piece_at(move.to_square)), reverse=True)
+    ordered_moves = capture_moves + non_capture_moves
+    return ordered_moves
+
+
+def piece_value(piece):
+    if piece is None:
+        return 0
+    piece_type = piece.piece_type
+    if piece_type == chess.PAWN:
+        return 1
+    elif piece_type == chess.KNIGHT:
+        return 3
+    elif piece_type == chess.BISHOP:
+        return 3
+    elif piece_type == chess.ROOK:
+        return 5
+    elif piece_type == chess.QUEEN:
+        return 9
+    elif piece_type == chess.KING:
+        return 0
+    return 0
+
+
+
 def add_to_transposition_table(board_str, score, move, depth):
-    transposition_table[board_str] = (move, score, depth)
+    transposition_table[board_str] = (score, move, depth)
 
     if len(transposition_table) > MAX_TRANSPOSITION_TABLE_SIZE:
         #On enlève l'entrée la moins récente
@@ -84,19 +117,21 @@ def add_to_transposition_table(board_str, score, move, depth):
 
 
 
-def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=4):
+def minimax(board, tour, maximizing_player, nb_coups, alpha=-inf, beta=inf, depth=3):
     """
     Renvoi le meilleur coup à jouer et le score au plateau après que ce coup soit joué
     """
-    if len(board.move_stack)<=8:
-        nb_coups_joues= len(board.move_stack)
-        if nb_coups_joues==0:
+    #On vérifie si on est dans une ouverture
+    if len(nb_coups) <= 10 :
+        nb_coups_joues = len(nb_coups)
+        #Si on est au premier coup, on joue une ouverture aléatoire
+        if nb_coups_joues==0 and tour == True:
             return (None, openings[randrange(0,len(openings))][0])
         #On cherche la même configuration dans la liste des ouvertures
         r = randrange(1,10)
         rd = 1
         for i in range(len(openings)):
-            if board.move_stack==openings[i][:nb_coups_joues]:
+            if nb_coups==openings[i][:nb_coups_joues]:
                 coup_secours = (None, openings[i][nb_coups_joues])
                 print(coup_secours)
                 if r==rd:
@@ -109,19 +144,23 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=4):
     
     board_str = str(board)
     if board_str in transposition_table and transposition_table[board_str][2] >= depth:
-        return (transposition_table[board_str][1], transposition_table[board_str][0])
+        return (transposition_table[board_str][0], transposition_table[board_str][1])
 
     moves = [move for move in board.legal_moves]
+
+    ordered_moves = order_moves(board, moves)
+
+
     if board.legal_moves.count()==0 or depth==0 or is_win(board,tour,maximizing_player) or is_lose(board, tour, maximizing_player) or is_draw(board):
         return (evaluation_plateau(board, tour, maximizing_player, depth), None)
     board.push(moves[0])
-    score = minimax(board,not tour, maximizing_player,alpha,beta, depth-1)[0]
+    score = minimax(board,not tour, maximizing_player, nb_coups+[str(ordered_moves[0])], alpha,beta, depth-1)[0]
     best_move=board.pop()
     if tour==maximizing_player: #On cherche le Max
-        for move in moves[1:]:
+        for move in ordered_moves[1:]:
             board.push(move)
             add_to_transposition_table(board_str, score, move, depth)
-            val_board = minimax(board,not tour, maximizing_player,alpha,beta, depth-1)[0]
+            val_board = minimax(board,not tour, maximizing_player, nb_coups+[str(move)], alpha,beta, depth-1)[0]
         
             if val_board>score:
                 score= val_board
@@ -135,7 +174,7 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=4):
     else: #On cherche le Min
         for move in moves:
             board.push(move)
-            val_board = minimax(board,not tour, maximizing_player,alpha,beta, depth-1)[0]
+            val_board = minimax(board,not tour, maximizing_player, nb_coups+[str(move)], alpha,beta, depth-1)[0]
 
             if val_board<score:
                 score = val_board
