@@ -75,22 +75,35 @@ with open("openings_liste.txt", "rb") as fp:   # Unpickling
 
 
 def order_moves(board, moves):
+    ordered_moves = []
     capture_moves = []
-    non_capture_moves = []
+    check_moves = []
+    danger_moves = []
 
     for move in moves:
+        state = board.copy()
+        state.push(move)
         if board.is_capture(move):
             capture_moves.append(move)
+        elif state.is_check():
+            check_moves.append(move)
+        elif is_piece_under_danger(board, move):
+            danger_moves.append(move)
         else:
-            non_capture_moves.append(move)
+            ordered_moves.append(move)
 
-    # Sort the capture moves based on the captured piece value
-    capture_moves.sort(key=lambda move: piece_value(board.piece_at(move.to_square)), reverse=True)
-
-    # Combine the capture moves and non-capture moves in the desired order
-    ordered_moves = capture_moves + non_capture_moves
+    #Tri par priorité
+    ordered_moves = capture_moves + check_moves + danger_moves + ordered_moves
 
     return ordered_moves
+
+
+def is_piece_under_danger(board, move):
+    #Check si le coup adverse mais une de nos pièces en danger
+    board.push(move)
+    is_under_danger = any(board.is_attacked_by(not board.turn, square) for square in board.piece_map().keys())
+    board.pop()
+    return is_under_danger
 
 
 def piece_value(piece):
@@ -128,7 +141,7 @@ def add_to_transposition_table(board_str, score, move, depth):
 
 
 
-def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=3):
+def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
     """
     Renvoi le meilleur coup à jouer et le score au plateau après que ce coup soit joué
     """
