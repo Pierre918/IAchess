@@ -135,15 +135,15 @@ def select_node(node,state, player):
     Sélection en se basant sur le UCB ou PUCT
     """
     #UCB
-    """
-    max_score = -inf
-    best_child = None
-    for child in node.children:
-        score = ucb(child)
-        if score > max_score:
-            max_score = score
-            best_child = child
-    return best_child"""
+    #max_score = -inf
+    #best_child = None
+    #for child in node.children:
+    #    score = ucb(child)
+    #    if score > max_score:
+    #        max_score = score
+    #        best_child = child
+    #return best_child
+    
     #PUCT
     return puct(node, 5.0)
 
@@ -225,7 +225,6 @@ def analyze_position(board, num_moves_to_return=1, depth_limit=10, time_limit=0.
     Effectue l'analyse de la position avec Stockfish
     """
     search_limit = chess.engine.Limit(depth=depth_limit, time=time_limit)
-    #
     infos = engine.analyse(board, search_limit, multipv=num_moves_to_return)
     return [format_info(info) for info in infos]
 
@@ -476,6 +475,7 @@ def play():
             plt.axis('off')
             plt.show()"""
     else:
+        # La syntaxe du coup n'est pas bonne
         print("Invalid input")
         play()
     
