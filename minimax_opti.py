@@ -7,7 +7,7 @@ import pickle
 
 
 transposition_table = {}
-MAX_TRANSPOSITION_TABLE_SIZE = 1000000
+MAX_TRANSPOSITION_TABLE_SIZE = 100000
 
 def random_state(max_depth=100) :
     #créé un plateau avec des pièces positionées aléatoirement
