@@ -7,6 +7,7 @@ import pickle
 
 ##########################CREATION DE MINIMAX###########################################
 
+#Table de Transposition et sa taille limite
 transposition_table = {}
 MAX_TRANSPOSITION_TABLE_SIZE = 100000
 
@@ -145,6 +146,7 @@ def piece_value(piece):
 
 
 def add_to_transposition_table(board_str, score, move, depth):
+    #On ajoute notre position à la table de transposition
     transposition_table[board_str] = (score, move, depth)
 
     if len(transposition_table) > MAX_TRANSPOSITION_TABLE_SIZE:
@@ -170,12 +172,12 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
         #Si on est au premier coup, on joue une ouverture aléatoire
         if nb_coups_joues==0 and tour == True:
             return (None, openings[randrange(0,len(openings))][0])
-        #On cherche la même configuration dans la liste des ouvertures
+        #On cherche une même configuration dans la liste des ouvertures
         r = randrange(1,10)
         rd = 1
         for i in range(len(openings)):
             if board.move_stack==openings[i][:nb_coups_joues]:
-                coup_secours = (None, openings[i][nb_coups_joues])
+                coup_secours = (None, openings[i][nb_coups_joues]) #Si il n'existe pas r d'ouvertures comme celle qu'on a joué alors on prend la 1ère
                 print(coup_secours)
                 if r==rd:
                     coup = (None, openings[i][nb_coups_joues])
@@ -187,17 +189,19 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
             pass
     
     board_str = board.fen()
-    transposition_entry = lookup_transposition_table(board_str)
+    transposition_entry = lookup_transposition_table(board_str) #On regarde si il exite une position similaire dans la table
+    #On vérifie l'existence de notre position dans la table de transposition exploré avec une profondeur supérieur que celle dans laquelle on se trouve
     if transposition_entry and transposition_entry[2] >= depth:
         return transposition_entry[0], transposition_entry[1]
-
+    
+    #On prend tout les coups légaux et on les tri
     moves = [move for move in board.legal_moves]
     ordered_moves = order_moves(board, moves)
 
     #condition d'arret (fin de partie ou profondeur max atteinte)
     if board.legal_moves.count()==0 or depth==0 or is_win(board,tour,maximizing_player) or is_lose(board, tour, maximizing_player) or is_draw(board):
         score = evaluation_plateau(board, tour, maximizing_player, depth)
-        add_to_transposition_table(board_str, score, None, depth)
+        add_to_transposition_table(board_str, score, None, depth) #Ajout dans la table de transposition
         return score, None
     board.push(moves[0]) #on effectue le tout premier coup avant de rentrer dans la boucle pour obtenir une valeur de score et pouvoir la comparé ensuite
     score = minimax(board,not tour, maximizing_player, alpha,beta, depth-1)[0] #variable qui contient le meilleur score
@@ -359,7 +363,7 @@ class JoueurAleatoire:
 
 
 def move_player():
-    """permet de jouer contre l'IA"""
+    """Permet de jouer contre l'IA"""
     try :
         player_move = str(input("Move Player: "))
         board.push_san(player_move)
@@ -382,7 +386,7 @@ print(board.turn)
 print("\n")
 print(board.legal_moves)
 print(board.fen)
-transposition_table.clear()
+transposition_table.clear() #Effacer la table en début de partie
 while not board.is_checkmate():
     move_player()
     move_minimax = minimax(board, board.turn, board.turn)[1]
@@ -402,7 +406,7 @@ while not board.is_checkmate():
     if len(board.move_stack)>10:
         break
     """
-transposition_table.clear()
+transposition_table.clear() #Effacer la table en fin de partie
 if board.turn:
     print("Winner : Player")
 else :
