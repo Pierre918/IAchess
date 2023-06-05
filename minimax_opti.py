@@ -175,7 +175,6 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
                 print(coup_secours)
                 if r==rd:
                     coup = (None, openings[i][nb_coups_joues])
-                    print(coup)
                     return coup
                 rd += 1
         try:
