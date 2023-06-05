@@ -9,6 +9,18 @@ import pickle
 transposition_table = {}
 MAX_TRANSPOSITION_TABLE_SIZE = 1000000
 
+def random_state(max_depth=100) :
+    #créé un plateau avec des pièces positionées aléatoirement
+    board = chess.Board()
+    depth = random.randrange(0, max_depth)
+    
+    for _ in range(depth):
+        all_moves = list(board.legal_moves)
+        random_move = random.choice(all_moves)
+        board.push(random_move)
+        if board.is_game_over():
+            break
+    return board
 
 def evaluation_piece(piece, maximizing_player):
     try:
@@ -76,34 +88,31 @@ with open("openings_liste.txt", "rb") as fp:   # Unpickling
 
 def order_moves(board, moves):
     ordered_moves = []
-    capture_moves = []
-    check_moves = []
-    danger_moves = []
 
+    # 1. Les captures basées sur le MVV-LVA (Most Valuable Victim - Least Valuable Attacker) method
+    capture_scores = {}
     for move in moves:
-        state = board.copy()
-        state.push(move)
         if board.is_capture(move):
-            capture_moves.append(move)
-        elif state.is_check():
-            check_moves.append(move)
-        elif is_piece_under_danger(board, move):
-            danger_moves.append(move)
-        else:
-            ordered_moves.append(move)
+            captured_piece = board.piece_at(move.to_square)
+            capturing_piece = board.piece_at(move.from_square)
+            score = 10 * piece_value(captured_piece) - piece_value(capturing_piece)
+            capture_scores[move] = score
+    sorted_captures = sorted(capture_scores, key=capture_scores.get, reverse=True)
+    ordered_moves.extend(sorted_captures)
 
-    #Tri par priorité
-    ordered_moves = capture_moves + check_moves + danger_moves + ordered_moves
+    # 2. Promotions
+    promotion_moves = [move for move in moves if move.promotion]
+    ordered_moves.extend(promotion_moves)
+
+    # 3. Echecs
+    checking_moves = [move for move in moves if board.gives_check(move)]
+    ordered_moves.extend(checking_moves)
+
+    # 4. Les autres coups 
+    non_capture_moves = [move for move in moves if move not in ordered_moves]
+    ordered_moves.extend(non_capture_moves)
 
     return ordered_moves
-
-
-def is_piece_under_danger(board, move):
-    #Check si le coup adverse mais une de nos pièces en danger
-    board.push(move)
-    is_under_danger = any(board.is_attacked_by(not board.turn, square) for square in board.piece_map().keys())
-    board.pop()
-    return is_under_danger
 
 
 def piece_value(piece):
@@ -135,15 +144,21 @@ def add_to_transposition_table(board_str, score, move, depth):
     transposition_table[board_str] = (score, move, depth)
 
     if len(transposition_table) > MAX_TRANSPOSITION_TABLE_SIZE:
-        #On enlève l'entrée la moins récente
+        # On enlève l'entrée la moins récente
         oldest_entry = min(transposition_table.keys(), key=lambda k: transposition_table[k][2])
         del transposition_table[oldest_entry]
 
+
+def lookup_transposition_table(board_str):
+    if board_str in transposition_table:
+        return transposition_table[board_str]
+    return None
 
 
 def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
     """
     Renvoi le meilleur coup à jouer et le score au plateau après que ce coup soit joué
+    """
     """
     #On vérifie si on est dans une ouverture
     if len(board.move_stack) <= 10 :
@@ -167,25 +182,27 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
             return coup_secours
         except:
             pass
-    
-    board_str = str(board)
-    if board_str in transposition_table and transposition_table[board_str][2] >= depth:
-        return (transposition_table[board_str][0], transposition_table[board_str][1])
+    """
+    board_str = board.fen()
+    transposition_entry = lookup_transposition_table(board_str)
+    if transposition_entry and transposition_entry[2] >= depth:
+        return transposition_entry[0], transposition_entry[1]
 
     moves = [move for move in board.legal_moves]
-
     ordered_moves = order_moves(board, moves)
 
 
     if board.legal_moves.count()==0 or depth==0 or is_win(board,tour,maximizing_player) or is_lose(board, tour, maximizing_player) or is_draw(board):
-        return (evaluation_plateau(board, tour, maximizing_player, depth), None)
+        score = evaluation_plateau(board, tour, maximizing_player, depth)
+        add_to_transposition_table(board_str, score, None, depth)
+        return score, None
     board.push(moves[0])
     score = minimax(board,not tour, maximizing_player, alpha,beta, depth-1)[0]
     best_move=board.pop()
     if tour==maximizing_player: #On cherche le Max
         for move in ordered_moves[1:]:
             board.push(move)
-            add_to_transposition_table(board_str, score, move, depth)
+            
             val_board = minimax(board,not tour, maximizing_player, alpha,beta, depth-1)[0]
         
             if val_board>score:
@@ -304,15 +321,15 @@ print("\n")
 print(board.turn)
 print("\n")
 print(board.legal_moves)
-
+print(board.fen)
+transposition_table.clear()
 while not board.is_checkmate():
     move_player()
-    transposition_table.clear()
     move_minimax = minimax(board, board.turn, board.turn)[1]
     print('Move AI : ', move_minimax)
     print("\n")
     board.push(move_minimax)
-    transposition_table.clear()
+    
     print(board)
     print("\n")
     
@@ -322,7 +339,10 @@ while not board.is_checkmate():
     print("checkmate : ",board.is_checkmate())
     print("\n")
     print(board.move_stack,"\n", type(board.move_stack), type(board.move_stack[0]))
+    if len(board.move_stack)>10:
+        break
     """
+transposition_table.clear()
 if board.turn:
     print("Winner : Player")
 else :
