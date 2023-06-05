@@ -159,7 +159,7 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
     """
     Renvoi le meilleur coup à jouer et le score au plateau après que ce coup soit joué
     """
-    """
+    
     #On vérifie si on est dans une ouverture
     if len(board.move_stack) <= 10 :
         nb_coups_joues = len(board.move_stack)
@@ -182,7 +182,7 @@ def minimax(board, tour, maximizing_player, alpha=-inf, beta=inf, depth=5):
             return coup_secours
         except:
             pass
-    """
+    
     board_str = board.fen()
     transposition_entry = lookup_transposition_table(board_str)
     if transposition_entry and transposition_entry[2] >= depth:
