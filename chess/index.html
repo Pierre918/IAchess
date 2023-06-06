@@ -1,0 +1,284 @@
+<html>
+    <head>
+        <title>Chess</title>
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
+        <script src= "https://code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.js" integrity="sha384-s3XgLpvmHyscVpijnseAmye819Ee3yaGa8NxstkJVyA6nuDFjt59u1QvuEl/mecz" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        
+        <p><span class="fancy">Minimax</span>  vs  <span class="fancy">Mcts</span></p><br><br><br><br>
+
+        <div class="container"></div>
+        
+        <div class="container">
+            <div class="dashed" id="myBoard"></div><br><br><br>
+            <div class="buttons-container">
+                <button class="button-arounder" id="MinimaxBtn">Minimax</button> <br>
+                <button class="button-arounder" id="MctsBtn">MCTS</button>
+            </div><br><br><br>
+            <div class="buttons-container">
+            <button class="button-arounder" id="vs">Vs</button> <br>
+        </div>
+        </div>
+        
+        <div class="container">
+            
+            <div class="infos">
+                <label>Status:</label>
+                <div id="status"></div>
+                <label>FEN:</label>
+                <div id="fen"></div>
+                <label>PGN:</label>
+                <div id="pgn"></div>
+            </div>
+            <hr>
+            <br>
+            
+            <div class="buttons-container">
+                <button class="button-arounder1" id="FlipBtn">Switch color</button>
+            </div><br><br><br><br>
+            
+        </div>
+        <br>
+        
+        
+        <!--<button id="FlipBtn">Switch orientation</button><br>-->
+        <br>
+        
+        
+        <script>
+            var board = null;
+            var game = new Chess()
+            var $status = $('#status')
+            var $fen = $('#fen')
+            var $pgn = $('#pgn')
+            var AI = "random";
+            let coups = [];
+            
+            function onDragStart(source, piece, position, orientation) {
+                // Ne pas sélectionner de pièces si la partie est terminée
+                if (game.game_over()) return false;
+
+                // Sélectionner uniquement les pièces pour les Blancs ou Noirs
+                if (piece.search(/^b/) !== -1 && board.orientation() === 'white' || piece.search(/^w/) !== -1 && board.orientation() === 'black') return false;
+            }
+
+            function makeAIMove() {
+                $.ajax({
+                    url: "http://localhost:5000/play",
+                    type: 'POST',
+                    data: {
+                        move: game.fen(), // Envoyer la position actuelle du jeu à votre serveur Python
+                        coups : JSON.stringify(coups),
+                        ai: AI,
+                    },
+                    
+                    success: function(response) {
+                        var aiMove = response.ai_move;
+                        console.log(aiMove);
+                        coups.push(aiMove);
+                        var move = game.move({
+                            from: aiMove[0]+aiMove[1],
+                            to: aiMove[2]+aiMove[3],
+                        });
+                        board.position(game.fen());
+                        //board.position(aiMove);
+
+                        updateStatus();
+                        window.setTimeout(makeAIMove, 250);
+
+                        
+                    }
+                });
+
+            }
+
+            function onDrop(source, target) {
+                // Vérifier si le mouvement est légal
+                
+                var move = game.move({
+                    from: source,
+                    to: target, 
+                    promotion: 'q' // NOTE: Toujours promouvoir en reine pour l'exemple de simplicité
+                });
+
+                // Mouvement illégal
+                if (move === null) return 'snapback';
+
+                
+
+                move_done = String(source)+String(target);
+                coups.push(move_done) ;
+                console.log(coups);
+                
+                if (AI === "minimax" || AI === "mcts") {
+                    window.setTimeout(makeAIMove, 250);
+                }
+                else {
+                    window.setTimeout(makeRandomMove, 250);
+                }
+                
+                // Mettre à jour la position du jeu sur le serveur
+                /*$.ajax({
+                    url: "http://localhost:5000/play",
+                    type: 'POST',
+                    data: {
+                        move: game.fen()  // Envoyer la position actuelle du jeu à votre serveur Python
+                    },
+                    success: function(response) {
+                        var aiMove = response.ai_move;
+                        console.log(aiMove);
+
+
+                        board.position(aiMove);
+
+                        updateStatus();
+
+                        // Vérifier si la partie est terminée
+                        if (game.game_over()) {
+                            alert("La partie est terminée !");
+                            return;
+                        }
+                        
+                    }
+                });*/
+
+                //console.log("Move: " + move.from + "-" + move.to);
+                console.log(game.turn())
+                updateStatus();
+                
+            }
+
+            
+
+            function onSnapEnd() {
+                board.position(game.fen());
+            }
+
+            function updateStatus() {
+                var status = ''
+
+                var moveColor = 'White'
+                if (game.turn() === 'b') {
+                    moveColor = 'Black'
+                }
+
+                // checkmate?
+                if (game.in_checkmate()) {
+                    status = 'Game over, ' + moveColor + ' is in checkmate.'
+                }
+
+                // draw?
+                else if (game.in_draw()) {
+                    status = 'Game over, drawn position'
+                }
+
+                // game still on
+                else {
+                    status = moveColor + ' to move'
+
+                    // check?
+                    if (game.in_check()) {
+                    status += ', ' + moveColor + ' is in check'
+                    }
+                }
+
+                $status.html(status)
+                $fen.html(game.fen())
+                $pgn.html(game.pgn())
+                }
+
+
+            function makeRandomMove () {
+            var possibleMoves = game.moves()
+
+            // game over
+            if (possibleMoves.length === 0) return
+
+            var randomIdx = Math.floor(Math.random() * possibleMoves.length)
+            game.move(possibleMoves[randomIdx])
+            board.position(game.fen())
+
+            updateStatus()
+            }
+
+            
+
+            $('#FlipBtn').on('click', function () {
+            if (board.orientation() === 'white') {
+                board.orientation('black');
+                if (game.fen() === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'){
+                    makeRandomMove();
+                }
+                if (AI === "vs"){
+                    window.setTimeout(makeAIMove, 250);
+                }
+                }
+                
+            
+            else if (board.orientation() === 'black') {
+                board.orientation('white');
+                if (AI === "vs"){
+                    window.setTimeout(makeAIMove, 250);
+                }
+                }
+            })
+            
+
+            var config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd,
+            }
+
+            board = Chessboard('myBoard', config)
+
+
+            $('#MinimaxBtn').on('click', function () {
+                game.reset();
+                board.start();
+                AI = "minimax"
+                console.log(AI)
+                $status.html(status)
+                $fen.html(game.fen())
+                $pgn.html(game.pgn())
+                if (board.orientation() === 'black'){
+                    makeAIMove();
+                }
+            })
+            $('#MctsBtn').on('click', function () {
+                game.reset();
+                board.start();
+                AI = "mcts"
+                console.log(AI)
+                $status.html(status)
+                $fen.html(game.fen())
+                $pgn.html(game.pgn())
+                if (board.orientation() === 'black'){
+                    makeAIMove();
+                }
+            })
+            $('#vs').on('click', function () {
+                game.reset();
+                board.start();
+                AI = "vs"
+                console.log(AI)
+                $status.html(status)
+                $fen.html(game.fen())
+                $pgn.html(game.pgn())
+                window.setTimeout(makeAIMove, 250);
+                
+            })
+
+
+            updateStatus()
+        </script>
+    </body>
+</html>
