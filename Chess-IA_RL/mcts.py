@@ -160,20 +160,16 @@ def expand_node(node, state, player):
         except:
             # Si Stockfish ne peut pas trouver de coup, choisis un coup aléatoire parmi les coups légaux
             best_possible_move = random.choice(list(state.legal_moves))
-        
-        # Crée un nouvel état en appliquant le meilleur coup possible
+            
+        # Crée un nouvel état en appliquant le meilleur coup possible et ajoute le nouvel état comme enfant du nœud actuel
         new_state = state.copy()
         new_state.push(best_possible_move.move)
-        
-        # Vérifie si le nouvel état n'est pas déjà un enfant du nœud actuel et ajoute le nouvel état comme enfant du nœud actuel
         if new_state not in [child.state for child in node.children]:
             node.add_child(new_state)
-        
-        # Le coup choisi est le premier enfant du nœud actuel
-        chosen_move = node.children[0]
-        
-        # Retourne le coup choisi et la valeur 1 pour indiquer l'expansion du nœud
-        return chosen_move, 1
+            
+        # Le coup choisi est le dernier enfant du nœud actuel
+        chosen_move = node.children[-1]
+        return chosen_move
     else:
         # Si c'est au MCTS de joeur
         for move in state.legal_moves:
@@ -183,11 +179,9 @@ def expand_node(node, state, player):
             # Vérifie si le nouvel état n'est pas déjà un enfant du nœud actuel et ajoute le nouvel état comme enfant du nœud actuel
             if new_state not in [child.state for child in node.children]:
                 node.add_child(new_state)
-        
+                
         # Choisi un coup aléatoire parmi les enfants du nœud actuel
         random_move = random.choice(node.children)
-        
-        # Retourne le coup choisi aléatoirement
         return random_move
 
 
@@ -412,7 +406,7 @@ def play():
             print("L'IA réfléchit...")
             
             # Effectue la recherche Monte-Carlo
-            best_move = mcts(root, board, iterations)
+            best_move = mcts(root, board, iterations, player)
             board.push_san(str(best_move))
             
             print("L'IA joue : " + str(best_move))
@@ -443,7 +437,7 @@ def play():
             print("L'IA réfléchit...")
             
             # Effectue la recherche Monte-Carlo
-            best_move = mcts(root, board, iterations)
+            best_move = mcts(root, board, iterations, player)
             board.push_san(str(best_move))
             
             print("L'IA joue : " + str(best_move))
