@@ -289,7 +289,9 @@ def endgame_evaluation(board, maximizing_player):
 
 import time
 class JoueurMinimax():
-    """définition d'une classe qui nous a été utile lors de tests de l'algorithme"""
+    """définition d'une classe qui nous a été utile lors de tests de l'algorithme
+    Elle n'est pas utilisé dans la suite de l'algorithme car nous n'avons pas conservé tous nos tests.
+    Nous souhaitions quand même montrer comment nous avons effectué nos tests."""
     def __init__(self,board, ma_couleur):
         self.board = board
         self.color = ma_couleur=="white" or ma_couleur=="blanc"
@@ -320,13 +322,14 @@ class JoueurMinimax():
         print(self.is_my_turn(new_board), new_board.turn, self.color)
         if self.is_my_turn(new_board) and not is_lose(new_board, board.turn, self.color) and not is_draw(board):
             print("je joue")
-            self.board.push(minimax(self.board)[1])
+            self.board.push(minimax(self.board)[1])#minimax renvoi un tuple où le coup à jouer est situé en deuxième
             return self.board
         return new_board
     
 
 class JoueurAleatoire:
-    """on définit un joueur qui joue de manière aléatoire""""
+    """on définit un joueur qui joue de manière aléatoire. Il nous a été utile pour voir comment minimax se comportait dans 
+    différentes situations""""
     def __init__(self, board, ma_couleur):
         self.board = board
         self.color = ma_couleur=="white" or ma_couleur=="blanc"
@@ -355,7 +358,7 @@ class JoueurAleatoire:
         if self.is_my_turn(new_board) and not is_lose(new_board, board.turn, self.color) and not is_draw(board):
             moves = [move for move in board.legal_moves]
             print("je joue")
-            self.board.push(random.choice(moves))
+            self.board.push(random.choice(moves)) #on joue un coup au hasard mais qui est autorisé
             return self.board
         return new_board
     
@@ -365,7 +368,7 @@ class JoueurAleatoire:
 def move_player():
     """Permet de jouer contre l'IA"""
     try :
-        player_move = str(input("Move Player: "))
+        player_move = str(input("Move Player: ")) #on interroge l'utilisateur sur son coup à jouer
         board.push_san(player_move)
     except:
         print("Invalid move")
@@ -374,6 +377,8 @@ def move_player():
 
 
 ###### QUELQUES TESTS DE MAT #######
+#J'ai ici fait quelques tests de différents mat ce qui m'a permis d'identifier un problème 
+#dans la fonction d'évaluation (voir rapport)
 #board = chess.Board()
 #mat en 2 (le programme y arrive)
 #board=chess.Board("5Q2/8/4r1p1/6kp/qP6/3B1P2/3K2PP/8")
@@ -387,7 +392,7 @@ print("\n")
 print(board.legal_moves)
 print(board.fen)
 transposition_table.clear() #Effacer la table en début de partie
-while not board.is_checkmate():
+while not board.is_checkmate(): #simulation d'une partie minimax contre lui-même
     move_player()
     move_minimax = minimax(board, board.turn, board.turn)[1]
     print('Move AI : ', move_minimax)
