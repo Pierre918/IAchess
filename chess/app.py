@@ -9,10 +9,9 @@ import ast
 app = Flask(__name__)
 CORS(app)
 
-iterations = 10000
+iterations = 800
 
-
-
+# Route pour jouer un coup
 @app.route('/play', methods=['POST'])
 def play_move():
     move = request.form.get('move')
@@ -31,18 +30,24 @@ def play_move():
         print(coups)
     except:
         print("pas de coups")
+    
+    # Crée un objet d'échiquier
     board = chess.Board(move)
     coups1 = []
     for coup in coups:
         coups1.append(chess.Move.from_uci(coup))
     
     # Utilisez une des IA en Python pour calculer le mouvement de l'IA
+    
     if ai == "minimax":
+        # Utilise l'algorithme Minimax pour trouver le meilleur mouvement
         move_minimax = minimax(board, board.turn, board.turn, coups1)[1]
         print(move_minimax)
+        # Applique le mouvement sur l'échiquier
         board.push(move_minimax)
         ai_move =  str(move_minimax)
     elif ai == "mcts":
+        # Utilise l'algorithme MCTS pour trouver le meilleur mouvement
         root = Node(board)
         if len(coups)%2 !=0:
             player = "w"
@@ -51,20 +56,25 @@ def play_move():
         print(player)
         best_move = mcts(root, board, iterations, player)
         print(best_move)
+        # Applique le mouvement sur l'échiquier
         board.push_san(str(best_move))
         ai_move =  str(best_move)
     elif ai == "vs":
         if len(coups1)%2==0 or len(coups1)<= 10:
+            # Utilise l'algorithme Minimax pour trouver le meilleur mouvement si le nombre de coups est pair ou inférieur à 10
             move_minimax = minimax(board, board.turn, board.turn, coups1)[1]
             print(move_minimax)
+            # Applique le mouvement sur l'échiquier
             board.push(move_minimax)
             ai_move =  str(move_minimax)
         else:
+            # Utilise l'algorithme MCTS pour trouver le meilleur mouvement si le nombre de coups est impair et supérieur à 10
             root = Node(board)
             player = "b"
             print(player)
             best_move = mcts(root, board, iterations, player)
             print(best_move)
+            # Applique le mouvement sur l'échiquier
             board.push_san(str(best_move))
             ai_move =  str(best_move)
 
